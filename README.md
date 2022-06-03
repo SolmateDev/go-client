@@ -1,81 +1,30 @@
-# Noncepad Client
+# Solmate Client
 
-This repository compiles a Golang client that lets users access the gRPC endpoints using a local RPC proxy.
+Solmate is an online service offering:
+* JSON RPC access to Solana mainnet validators
+* API endpoints to spawn Solana test validator sandboxes
 
+
+The main client code is at [client.go](client/client.go).  The underlying protocol used to communicate with the Solmate API endpoint is gRPC.
 
 
 # Installation
 
+## Go Project
+
+Inside your Go project, run the following command:
 
 ```bash
-git clone https://github.com/Noncepad/go-client
-cd go-client
-make build
+( cd .. && git clone https://github.com/SolmateDev/solana-go && cd solana-go && git checkout v1.4.0-custom )
+go get github.com/SolmateDev/go-client
 ```
-
-The RPC server binary will be at `./bin/rpc-server` .
 
 # Usage
 
-
-## RPC Server
-
-Set the following environmental variables:
-
-```bash
-set -a
-export API_KEY=...put your API KEY here...
-./bin/rpc-server
-```
-
-### Test Connection
+Go to [Solmate.dev](https://solmate.dev), register, and subscribe to the sandbox service.  This service allows a developer with the appropriate API_KEY create Solana test validators.
 
 
-```bash
-curl -X POST -vv \
-     -H "Content-Type: application/json" \
-     -d '{"id":1,"method":"Arith.Multiply","params":[{"A":1,"B":2}]}' \
-     --url http://localhost:8080/jsonrpc
-```
+## Solana Test Validator
 
-### Send Transactions
+See the [sandbox.go](examples/sandbox/sandbox.go) for an example of how to create a Solana test validator and how to access the sandbox via JSON RPC using a Sandbox ID in the http headers.
 
-```bash
-curl -X POST -vv \
-     -H "Content-Type: application/json" \
-     -d '{"id":1,"method":"Basic.SendTx","params":[{"commitment":"processed","tx":["...serialized tx 1","...serialized tx 2",...]}]}' \
-     --url http://localhost:8080/jsonrpc
-```
-
-The 3 options for `commitment` are `processed`,`confirmed`,and `finalized`.  The transactions must be serialized in base64.
-
-
-The response will be a job id.  The send_tx action takes over 30 seconds.
-
-```json
-{
-     "id":334
-}
-```
-
-### Get SendTx
-
-
-```bash
-curl -X POST -vv \
-     -H "Content-Type: application/json" \
-     -d '{"id":1,"method":"Basic.GetSendTxResult","params":[{"id":334}]}' \
-     --url http://localhost:8080/jsonrpc
-```
-
-The job id is `334` in this example.
-
-The response will be:
-
-```json
-{
-    "signature":["...sig 1","... sig 2"]
-}
-```
-
-Signatures are formatted in base64.

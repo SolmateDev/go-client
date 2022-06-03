@@ -2,10 +2,9 @@ module github.com/SolmateDev/go-client
 
 go 1.18
 
-replace github.com/gagliardetto/solana-go => ../solana-go
-
 require (
-	github.com/gagliardetto/solana-go v1.4.0
+	github.com/SolmateDev/solana-go v1.4.1-custom
+	github.com/joho/godotenv v1.4.0
 	github.com/sirupsen/logrus v1.8.1
 )
 
@@ -47,7 +46,6 @@ require (
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/joho/godotenv v1.4.0
 	golang.org/x/net v0.0.0-20220403103023-749bd193bc2b // indirect
 	golang.org/x/sys v0.0.0-20220403205710-6acee93ad0eb // indirect
 	golang.org/x/text v0.3.7 // indirect

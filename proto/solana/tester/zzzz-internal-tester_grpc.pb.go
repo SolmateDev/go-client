@@ -35,7 +35,7 @@ func NewValidatorEnvClient(cc grpc.ClientConnInterface) ValidatorEnvClient {
 }
 
 func (c *validatorEnvClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (ValidatorEnv_CreateClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ValidatorEnv_ServiceDesc.Streams[0], "/tester.ValidatorEnv/Create", opts...)
+	stream, err := c.cc.NewStream(ctx, &ValidatorEnv_ServiceDesc.Streams[0], "/solanatester.ValidatorEnv/Create", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (x *validatorEnvCreateClient) Recv() (*CreateResponse, error) {
 
 func (c *validatorEnvClient) Destroy(ctx context.Context, in *DestroyRequest, opts ...grpc.CallOption) (*DestroyResponse, error) {
 	out := new(DestroyResponse)
-	err := c.cc.Invoke(ctx, "/tester.ValidatorEnv/Destroy", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/solanatester.ValidatorEnv/Destroy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func _ValidatorEnv_Destroy_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tester.ValidatorEnv/Destroy",
+		FullMethod: "/solanatester.ValidatorEnv/Destroy",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ValidatorEnvServer).Destroy(ctx, req.(*DestroyRequest))
@@ -150,7 +150,7 @@ func _ValidatorEnv_Destroy_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ValidatorEnv_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "tester.ValidatorEnv",
+	ServiceName: "solanatester.ValidatorEnv",
 	HandlerType: (*ValidatorEnvServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

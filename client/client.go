@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -16,8 +17,9 @@ import (
 )
 
 type Configuration struct {
-	Hostname string
-	ApiKey   string
+	Host   string
+	Port   uint16
+	ApiKey string
 }
 
 type Client struct {
@@ -36,9 +38,13 @@ func ConfigFromEnv() (*Configuration, error) {
 	config := new(Configuration)
 	_, present := os.LookupEnv("TEST")
 	if present {
-		config.Hostname = "grpc.test.solmate.dev"
+		config.Host = "grpc.test.solmate.dev"
+		config.Port = 443
+		//config.Host = "localhost"
+		//config.Port = 50051
 	} else {
-		config.Hostname = "grpc.solmate.dev"
+		config.Host = "grpc.solmate.dev"
+		config.Port = 443
 	}
 
 	config.ApiKey, present = os.LookupEnv("API_KEY")
@@ -60,6 +66,7 @@ func Create(ctx context.Context, config *Configuration) (*Client, error) {
 	}
 
 	e1 := new(Client)
+	e1.config = config
 	e1.conn, err = e1.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -80,21 +87,31 @@ func Create(ctx context.Context, config *Configuration) (*Client, error) {
 }
 
 func (e1 *Client) connect(ctx context.Context) (*grpc.ClientConn, error) {
+
 	var kacp = keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
 		Timeout:             2 * time.Second,  // wait 1 second for ping back
 		PermitWithoutStream: true,             // send pings even without active streams
 	}
+
 	return grpc.DialContext(
 		ctx,
-		e1.config.Hostname,
+		fmt.Sprintf("%s:%d", e1.config.Host, e1.config.Port),
 		grpc.WithTransportCredentials(credentials.NewTLS(
 			&tls.Config{
-				ServerName: e1.config.Hostname,
+				ServerName: e1.config.Host,
 			},
 		)),
 		grpc.WithKeepaliveParams(kacp),
 	)
+
+	/*
+		return grpc.DialContext(
+			ctx,
+			fmt.Sprintf("%s:%d", e1.config.Host, e1.config.Port),
+			grpc.WithInsecure(),
+		)
+	*/
 }
 
 func (e1 *Client) login(ctx context.Context) error {
@@ -110,6 +127,6 @@ func (e1 *Client) login(ctx context.Context) error {
 }
 
 func (e1 *Client) Ctx(ctx context.Context) context.Context {
-	md := metadata.New(map[string]string{"JWT": e1.jwtKey})
+	md := metadata.New(map[string]string{"authorization": e1.jwtKey})
 	return metadata.NewOutgoingContext(ctx, md)
 }
