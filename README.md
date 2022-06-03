@@ -15,13 +15,15 @@ The main client code is at [client.go](client/client.go).  The underlying protoc
 Inside your Go project, run the following command:
 
 ```bash
-( cd .. && git clone https://github.com/SolmateDev/solana-go && cd solana-go && git checkout v1.4.0-custom )
 go get github.com/SolmateDev/go-client
 ```
 
+The [client code](client/client.go) requires the setting of`API_KEY`.  Set it using either an environmental variable `$API_KEY` or just set the `Configuration` variable inside your Golang code.
+
+
 # Usage
 
-Go to [Solmate.dev](https://solmate.dev), register, and subscribe to the sandbox service.  This service allows a developer with the appropriate API_KEY create Solana test validators.
+Go to [Solmate.dev](https://solmate.dev), register, and subscribe to the sandbox service.  This service allows a developer with the appropriate `API_KEY` create Solana test validators.
 
 
 ## Solana Test Validator

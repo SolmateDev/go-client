@@ -34,14 +34,13 @@ type Solana struct {
 	Sandbox pbtstr.ValidatorEnvClient
 }
 
+// set $TEST and $API_KEY
 func ConfigFromEnv() (*Configuration, error) {
 	config := new(Configuration)
 	_, present := os.LookupEnv("TEST")
 	if present {
 		config.Host = "grpc.test.solmate.dev"
 		config.Port = 443
-		//config.Host = "localhost"
-		//config.Port = 50051
 	} else {
 		config.Host = "grpc.solmate.dev"
 		config.Port = 443
