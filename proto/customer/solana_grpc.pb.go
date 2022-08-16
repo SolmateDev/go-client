@@ -31,6 +31,7 @@ type SolanaClient interface {
 	ListValidator(ctx context.Context, in *base.Empty, opts ...grpc.CallOption) (*solana.ValidatorList, error)
 	DestroyValidator(ctx context.Context, in *solana.ValidatorDeleteRequest, opts ...grpc.CallOption) (*base.Empty, error)
 	SendTx(ctx context.Context, in *solana.SendBatchRequest, opts ...grpc.CallOption) (*solana.SendBatchResponse, error)
+	SendTxComplete(ctx context.Context, in *solana.SendBatchRequest, opts ...grpc.CallOption) (Solana_SendTxCompleteClient, error)
 }
 
 type solanaClient struct {
@@ -118,6 +119,38 @@ func (c *solanaClient) SendTx(ctx context.Context, in *solana.SendBatchRequest, 
 	return out, nil
 }
 
+func (c *solanaClient) SendTxComplete(ctx context.Context, in *solana.SendBatchRequest, opts ...grpc.CallOption) (Solana_SendTxCompleteClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Solana_ServiceDesc.Streams[1], "/customer.Solana/SendTxComplete", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &solanaSendTxCompleteClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Solana_SendTxCompleteClient interface {
+	Recv() (*solana.TxUpdate, error)
+	grpc.ClientStream
+}
+
+type solanaSendTxCompleteClient struct {
+	grpc.ClientStream
+}
+
+func (x *solanaSendTxCompleteClient) Recv() (*solana.TxUpdate, error) {
+	m := new(solana.TxUpdate)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // SolanaServer is the server API for Solana service.
 // All implementations must embed UnimplementedSolanaServer
 // for forward compatibility
@@ -128,6 +161,7 @@ type SolanaServer interface {
 	ListValidator(context.Context, *base.Empty) (*solana.ValidatorList, error)
 	DestroyValidator(context.Context, *solana.ValidatorDeleteRequest) (*base.Empty, error)
 	SendTx(context.Context, *solana.SendBatchRequest) (*solana.SendBatchResponse, error)
+	SendTxComplete(*solana.SendBatchRequest, Solana_SendTxCompleteServer) error
 	mustEmbedUnimplementedSolanaServer()
 }
 
@@ -152,6 +186,9 @@ func (UnimplementedSolanaServer) DestroyValidator(context.Context, *solana.Valid
 }
 func (UnimplementedSolanaServer) SendTx(context.Context, *solana.SendBatchRequest) (*solana.SendBatchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTx not implemented")
+}
+func (UnimplementedSolanaServer) SendTxComplete(*solana.SendBatchRequest, Solana_SendTxCompleteServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendTxComplete not implemented")
 }
 func (UnimplementedSolanaServer) mustEmbedUnimplementedSolanaServer() {}
 
@@ -277,6 +314,27 @@ func _Solana_SendTx_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Solana_SendTxComplete_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(solana.SendBatchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SolanaServer).SendTxComplete(m, &solanaSendTxCompleteServer{stream})
+}
+
+type Solana_SendTxCompleteServer interface {
+	Send(*solana.TxUpdate) error
+	grpc.ServerStream
+}
+
+type solanaSendTxCompleteServer struct {
+	grpc.ServerStream
+}
+
+func (x *solanaSendTxCompleteServer) Send(m *solana.TxUpdate) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Solana_ServiceDesc is the grpc.ServiceDesc for Solana service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -309,6 +367,11 @@ var Solana_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "SubscribeAccount",
 			Handler:       _Solana_SubscribeAccount_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "SendTxComplete",
+			Handler:       _Solana_SendTxComplete_Handler,
 			ServerStreams: true,
 		},
 	},

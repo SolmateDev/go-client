@@ -4,9 +4,11 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	sb "github.com/SolmateDev/go-client/examples/sandbox"
 	"github.com/joho/godotenv"
+	log "github.com/sirupsen/logrus"
 )
 
 func TestSandbox(t *testing.T) {
@@ -15,10 +17,11 @@ func TestSandbox(t *testing.T) {
 	if !present {
 		err = godotenv.Load("../../.env")
 	}
+	log.SetLevel(log.DebugLevel)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 
 	t.Cleanup(func() {
 		cancel()

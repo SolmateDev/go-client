@@ -1,32 +1,34 @@
-// This package creates a Solana Test validator accessible via HTTP.
-package sandbox
+package main
 
 import (
-	"context"
 	"errors"
 	"io"
+	"os"
 
-	clt "github.com/SolmateDev/go-client/client"
 	pbsol "github.com/SolmateDev/go-client/proto/solana"
 	pbtstr "github.com/SolmateDev/go-client/proto/solana/tester"
 	log "github.com/sirupsen/logrus"
 )
 
-func Run(ctx context.Context) error {
+type Sandbox struct {
+	Count  uint32 `arg name:"count" short:"n" help:"how many nodes will be in the private cluster"`
+	Output string `option name:"output" short:"o" help:"where will the result of the create command go."`
+}
 
-	client, err := clt.Create(ctx, nil)
+func (r *Sandbox) Run(kongCtx *CLIContext) error {
+	li := kongCtx.LocalInfo
+	ctx := li.ctx
+	err := li.auth()
 	if err != nil {
 		return err
 	}
-
+	client := li.client
 	stream, err := client.Solana.Sandbox.CreatePrivateCluster(client.Ctx(ctx), &pbsol.PrivateClusterCreateRequest{
-		Count: 3,
+		Count: r.Count,
 	})
 	if err != nil {
 		return err
 	}
-	defer stream.CloseSend()
-
 	doneC := ctx.Done()
 	progressC := make(chan *pbsol.Progress, 10)
 	clusterC := make(chan *pbsol.PrivateCluster, 10)
@@ -34,6 +36,23 @@ func Run(ctx context.Context) error {
 	logC := make(chan *pbsol.TransactionLog, 10)
 	errorC := make(chan error, 1)
 
+	splitter := "----------"
+
+	var logger *os.File
+	if len(r.Output) == 0 {
+		log.Debug("output to stdout")
+		logger = os.Stdout
+	} else if r.Output == "-" {
+		log.Debug("output to stdout")
+		logger = os.Stdout
+	} else {
+		log.Debugf("output to %s", r.Output)
+		logger, err = os.Open(r.Output)
+		if err != nil {
+			return err
+		}
+	}
+	logger.Write([]byte("\n" + splitter + "\n"))
 	// once the stream is closed or ctx.Done() is reached, the sandbox on the Solmate side will be terminated
 	go readStream(stream, errorC, progressC, clusterC, validatorC, logC)
 
@@ -45,13 +64,25 @@ out:
 		case err = <-errorC:
 			break out
 		case p := <-progressC:
-			log.Debugf("progress: %+v", p)
+			err = printEvent(logger, splitter, p)
+			if err != nil {
+				break out
+			}
 		case c := <-clusterC:
-			log.Debugf("cluster: %+v", c)
+			err = printEvent(logger, splitter, c)
+			if err != nil {
+				break out
+			}
 		case v := <-validatorC:
-			log.Debugf("validator: %+v", v)
+			err = printEvent(logger, splitter, v)
+			if err != nil {
+				break out
+			}
 		case l := <-logC:
-			log.Debugf("log: %+v", l)
+			err = printEvent(logger, splitter, l)
+			if err != nil {
+				break out
+			}
 		}
 	}
 
@@ -81,6 +112,7 @@ out:
 			// do nothing, just for pinging
 			log.Debug("received ping")
 		case *pbsol.PrivateClusterCreateResponse_Progress:
+			log.Debug("received progress")
 			x, ok := msg.Response.(*pbsol.PrivateClusterCreateResponse_Progress)
 			if !ok {
 				err = errors.New("bad progress")
@@ -88,8 +120,9 @@ out:
 			if x.Progress == nil {
 				err = errors.New("blank progress")
 			}
-
+			progressC <- x.Progress
 		case *pbsol.PrivateClusterCreateResponse_Cluster:
+			log.Debug("received cluster")
 			x, ok := msg.Response.(*pbsol.PrivateClusterCreateResponse_Cluster)
 			if !ok {
 				err = errors.New("bad cluster")
@@ -101,6 +134,7 @@ out:
 			}
 			clusterC <- x.Cluster
 		case *pbsol.PrivateClusterCreateResponse_Log:
+			log.Debug("received log")
 			x, ok := msg.Response.(*pbsol.PrivateClusterCreateResponse_Log)
 			if !ok {
 				err = errors.New("bad log")
@@ -112,6 +146,7 @@ out:
 			}
 			logC <- x.Log
 		case *pbsol.PrivateClusterCreateResponse_Validator:
+			log.Debug("received validator")
 			x, ok := msg.Response.(*pbsol.PrivateClusterCreateResponse_Validator)
 			if !ok {
 				err = errors.New("bad validator")

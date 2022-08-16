@@ -11,6 +11,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	solana "github.com/SolmateDev/go-client/proto/solana"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -22,8 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ValidatorEnvClient interface {
-	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (ValidatorEnv_CreateClient, error)
-	Destroy(ctx context.Context, in *DestroyRequest, opts ...grpc.CallOption) (*DestroyResponse, error)
+	CreatePrivateCluster(ctx context.Context, in *solana.PrivateClusterCreateRequest, opts ...grpc.CallOption) (ValidatorEnv_CreatePrivateClusterClient, error)
 }
 
 type validatorEnvClient struct {
@@ -34,12 +34,12 @@ func NewValidatorEnvClient(cc grpc.ClientConnInterface) ValidatorEnvClient {
 	return &validatorEnvClient{cc}
 }
 
-func (c *validatorEnvClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (ValidatorEnv_CreateClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ValidatorEnv_ServiceDesc.Streams[0], "/solanatester.ValidatorEnv/Create", opts...)
+func (c *validatorEnvClient) CreatePrivateCluster(ctx context.Context, in *solana.PrivateClusterCreateRequest, opts ...grpc.CallOption) (ValidatorEnv_CreatePrivateClusterClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ValidatorEnv_ServiceDesc.Streams[0], "/solanatester.ValidatorEnv/CreatePrivateCluster", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &validatorEnvCreateClient{stream}
+	x := &validatorEnvCreatePrivateClusterClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -49,38 +49,28 @@ func (c *validatorEnvClient) Create(ctx context.Context, in *CreateRequest, opts
 	return x, nil
 }
 
-type ValidatorEnv_CreateClient interface {
-	Recv() (*CreateResponse, error)
+type ValidatorEnv_CreatePrivateClusterClient interface {
+	Recv() (*solana.PrivateClusterCreateResponse, error)
 	grpc.ClientStream
 }
 
-type validatorEnvCreateClient struct {
+type validatorEnvCreatePrivateClusterClient struct {
 	grpc.ClientStream
 }
 
-func (x *validatorEnvCreateClient) Recv() (*CreateResponse, error) {
-	m := new(CreateResponse)
+func (x *validatorEnvCreatePrivateClusterClient) Recv() (*solana.PrivateClusterCreateResponse, error) {
+	m := new(solana.PrivateClusterCreateResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *validatorEnvClient) Destroy(ctx context.Context, in *DestroyRequest, opts ...grpc.CallOption) (*DestroyResponse, error) {
-	out := new(DestroyResponse)
-	err := c.cc.Invoke(ctx, "/solanatester.ValidatorEnv/Destroy", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ValidatorEnvServer is the server API for ValidatorEnv service.
 // All implementations must embed UnimplementedValidatorEnvServer
 // for forward compatibility
 type ValidatorEnvServer interface {
-	Create(*CreateRequest, ValidatorEnv_CreateServer) error
-	Destroy(context.Context, *DestroyRequest) (*DestroyResponse, error)
+	CreatePrivateCluster(*solana.PrivateClusterCreateRequest, ValidatorEnv_CreatePrivateClusterServer) error
 	mustEmbedUnimplementedValidatorEnvServer()
 }
 
@@ -88,11 +78,8 @@ type ValidatorEnvServer interface {
 type UnimplementedValidatorEnvServer struct {
 }
 
-func (UnimplementedValidatorEnvServer) Create(*CreateRequest, ValidatorEnv_CreateServer) error {
-	return status.Errorf(codes.Unimplemented, "method Create not implemented")
-}
-func (UnimplementedValidatorEnvServer) Destroy(context.Context, *DestroyRequest) (*DestroyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Destroy not implemented")
+func (UnimplementedValidatorEnvServer) CreatePrivateCluster(*solana.PrivateClusterCreateRequest, ValidatorEnv_CreatePrivateClusterServer) error {
+	return status.Errorf(codes.Unimplemented, "method CreatePrivateCluster not implemented")
 }
 func (UnimplementedValidatorEnvServer) mustEmbedUnimplementedValidatorEnvServer() {}
 
@@ -107,43 +94,25 @@ func RegisterValidatorEnvServer(s grpc.ServiceRegistrar, srv ValidatorEnvServer)
 	s.RegisterService(&ValidatorEnv_ServiceDesc, srv)
 }
 
-func _ValidatorEnv_Create_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(CreateRequest)
+func _ValidatorEnv_CreatePrivateCluster_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(solana.PrivateClusterCreateRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ValidatorEnvServer).Create(m, &validatorEnvCreateServer{stream})
+	return srv.(ValidatorEnvServer).CreatePrivateCluster(m, &validatorEnvCreatePrivateClusterServer{stream})
 }
 
-type ValidatorEnv_CreateServer interface {
-	Send(*CreateResponse) error
+type ValidatorEnv_CreatePrivateClusterServer interface {
+	Send(*solana.PrivateClusterCreateResponse) error
 	grpc.ServerStream
 }
 
-type validatorEnvCreateServer struct {
+type validatorEnvCreatePrivateClusterServer struct {
 	grpc.ServerStream
 }
 
-func (x *validatorEnvCreateServer) Send(m *CreateResponse) error {
+func (x *validatorEnvCreatePrivateClusterServer) Send(m *solana.PrivateClusterCreateResponse) error {
 	return x.ServerStream.SendMsg(m)
-}
-
-func _ValidatorEnv_Destroy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DestroyRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ValidatorEnvServer).Destroy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/solanatester.ValidatorEnv/Destroy",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ValidatorEnvServer).Destroy(ctx, req.(*DestroyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 // ValidatorEnv_ServiceDesc is the grpc.ServiceDesc for ValidatorEnv service.
@@ -152,16 +121,11 @@ func _ValidatorEnv_Destroy_Handler(srv interface{}, ctx context.Context, dec fun
 var ValidatorEnv_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "solanatester.ValidatorEnv",
 	HandlerType: (*ValidatorEnvServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Destroy",
-			Handler:    _ValidatorEnv_Destroy_Handler,
-		},
-	},
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Create",
-			Handler:       _ValidatorEnv_Create_Handler,
+			StreamName:    "CreatePrivateCluster",
+			Handler:       _ValidatorEnv_CreatePrivateCluster_Handler,
 			ServerStreams: true,
 		},
 	},

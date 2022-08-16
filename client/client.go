@@ -89,7 +89,7 @@ func (e1 *Client) connect(ctx context.Context) (*grpc.ClientConn, error) {
 
 	var kacp = keepalive.ClientParameters{
 		Time:                10 * time.Second, // send pings every 10 seconds if there is no activity
-		Timeout:             2 * time.Second,  // wait 1 second for ping back
+		Timeout:             10 * time.Second, // wait 10 second for ping back
 		PermitWithoutStream: true,             // send pings even without active streams
 	}
 
